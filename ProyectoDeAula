@@ -1,0 +1,323 @@
+
+package com.mycompany.proyectodeaula;
+
+import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+public class ProyectoDeAula{
+
+    // Constantes para los nombres de los sitios turísticos
+    private static final String SITIO_CENTRO = "Centro Historico";
+    private static final String SITIO_CASTILLO = "Castillo de San Felipe";
+    private static final String SITIO_PLAYA = "Playa de Boca Grande";
+    private static final String SITIO_INDIA = "India Catalina";
+
+    // Mapas para almacenar usuarios, historial de sitios visitados y fechas de visita
+    private static final Map<String, String> usuarios = new HashMap<>();
+    private static final Map<String, List<String>> historialSitios = new HashMap<>();
+    private static final Map<String, List<LocalDateTime>> historialFechas = new HashMap<>();
+
+    public static void main(String[] args) {
+        // Inicialización de usuarios y estructuras de datos
+        inicializarUsuarios();
+
+        Scanner scanner = new Scanner(System.in);
+        boolean salir = false;
+
+        // Menú principal del programa
+        while (!salir) {
+            System.out.println("\n--- Menú Principal ---");
+            System.out.println("1. Registrarse");
+            System.out.println("2. Iniciar Sesión");
+            System.out.println("3. Ver Sitios Turísticos Visitados");
+            System.out.println("4. Salir");
+
+            // Obtener la opción del usuario
+            int opcion = obtenerNumero(scanner, "Seleccione una opción: ");
+
+            switch (opcion) {
+                case 1:
+                    registrarNuevoUsuario(scanner);
+                    break;
+                case 2:
+                    iniciarSesion(scanner);
+                    break;
+                case 3:
+                    verSitiosTuristicosVisitados(scanner);
+                    break;
+                case 4:
+                    salir = true;
+                    break;
+                default:
+                    System.out.println("Opción no válida. Por favor, seleccione una opción válida.");
+                    break;
+            }
+        }
+
+        scanner.close();
+    }
+
+    // Método para registrar un nuevo usuario
+    private static void registrarNuevoUsuario(Scanner scanner) {
+        System.out.println("\n--- Registro de Nuevo Usuario ---");
+        String nuevoUsuario = obtenerNombreUsuario(scanner);
+        String nuevaContrasena = obtenerEntradaContrasena(scanner, "Ingrese una contraseña para registrarse: ");
+
+        if (nuevoUsuario != null) {
+            // Almacenar usuario y su contraseña (hashed)
+            usuarios.put(nuevoUsuario, hashContrasena(nuevaContrasena));
+            historialSitios.put(nuevoUsuario, new ArrayList<>());
+            historialFechas.put(nuevoUsuario, new ArrayList<>());
+            System.out.println("Registro exitoso. Ahora puede iniciar sesión.");
+        } else {
+            System.out.println("El nombre de usuario debe tener al menos 8 caracteres.");
+        }
+    }
+
+    // Método para obtener el nombre de usuario y validar su longitud
+    private static String obtenerNombreUsuario(Scanner scanner) {
+        String nuevoUsuario;
+        do {
+            nuevoUsuario = obtenerEntradaUsuario(scanner, "Ingrese un nombre de usuario para registrarse: ");
+            if (nuevoUsuario.length() < 8) {
+                System.out.println("El nombre de usuario debe tener al menos 8 caracteres.");
+            }
+        } while (nuevoUsuario.length() < 8);
+        return nuevoUsuario;
+    }
+
+    // Método para iniciar sesión
+    private static void iniciarSesion(Scanner scanner) {
+        System.out.println("\n--- Inicio de Sesión ---");
+        String usuario = obtenerEntradaUsuario(scanner, "Ingrese su nombre de usuario: ");
+        String contrasena = obtenerEntradaUsuario(scanner, "Ingrese su contraseña: ");
+
+        if (verificarCredenciales(usuario, hashContrasena(contrasena))) {
+            System.out.println("Inicio de sesión exitoso.");
+
+            // Mostrar historial de sitios visitados
+            mostrarHistorialSitios(usuario);
+
+            // Mostrar sitios turísticos
+            mostrarMenuSitiosTuristicos(scanner, usuario);
+        } else {
+            System.out.println("Nombre de usuario o contraseña incorrectos. No se puede iniciar sesión.");
+        }
+    }
+
+    // Método para ver los sitios turísticos visitados por el usuario
+    private static void verSitiosTuristicosVisitados(Scanner scanner) {
+        System.out.println("\n--- Sitios Turísticos Visitados ---");
+        String usuario = obtenerEntradaUsuario(scanner, "Ingrese su nombre de usuario: ");
+        mostrarHistorialSitios(usuario);
+    }
+
+    // Método para mostrar el menú de sitios turísticos y permitir al usuario seleccionar uno
+    private static void mostrarMenuSitiosTuristicos(Scanner scanner, String usuario) {
+        boolean continuar = true;
+        while (continuar) {
+            System.out.println("\n--- Menú de Sitios Turísticos ---");
+            System.out.println("1. " + SITIO_CENTRO);
+            System.out.println("2. " + SITIO_CASTILLO);
+            System.out.println("3. " + SITIO_PLAYA);
+            System.out.println("4. " + SITIO_INDIA);
+            System.out.println("0. Salir");
+
+            // Obtener la opción del usuario
+            int opcion = obtenerNumero(scanner, "Seleccione un sitio turístico (0 para salir): ");
+
+            switch (opcion) {
+                case 1:
+                    registrarVisita(usuario, SITIO_CENTRO, scanner);
+                    break;
+                case 2:
+                    registrarVisita(usuario, SITIO_CASTILLO, scanner);
+                    break;
+                case 3:
+                    registrarVisita(usuario, SITIO_PLAYA, scanner);
+                    break;
+                case 4:
+                    registrarVisita(usuario, SITIO_INDIA, scanner);
+                    break;
+                case 0:
+                    continuar = false;
+                    break;
+                default:
+                    System.out.println("Opción no válida. Por favor, seleccione una opción válida.");
+                    break;
+            }
+        }
+    }
+
+    // Método para mostrar los detalles de un sitio turístico
+    private static void mostrarDetallesSitio(String nombre, String tipo, String horario, double gastosAproximados) {
+        System.out.println("\nDetalles de " + nombre + ":");
+        System.out.println("Tipo: " + tipo);
+        System.out.println("Horario: " + horario);
+        System.out.println("Gastos Aproximados: $" + gastosAproximados);
+    }
+
+    // Método para inicializar algunos usuarios de ejemplo
+    private static void inicializarUsuarios() {
+        // Agregar usuarios a la base de datos
+        usuarios.put("usuario2", hashContrasena("password2"));
+        historialSitios.put("usuario2", new ArrayList<>());
+        historialFechas.put("usuario2", new ArrayList<>());
+    }
+
+    // Método para obtener entrada de usuario
+    private static String obtenerEntradaUsuario(Scanner scanner, String mensaje) {
+        // Solicitar y validar la entrada del usuario
+        System.out.println(mensaje);
+        return scanner.nextLine().trim();
+    }
+
+    // Método para obtener entrada de contraseña
+    private static String obtenerEntradaContrasena(Scanner scanner, String mensaje) {
+        // Solicitar y validar la entrada de la contraseña
+        String contrasena;
+        boolean esValida;
+        do {
+            contrasena = obtenerEntradaUsuario(scanner, mensaje);
+            esValida = validarContrasena(contrasena);
+            if (!esValida) {
+                System.out.println("La contraseña debe tener al menos 8 caracteres y no puede contener caracteres especiales.");
+            }
+        } while (!esValida);
+        return contrasena;
+    }
+
+    // Método para verificar si la contraseña cumple con los requisitos
+    private static boolean validarContrasena(String contrasena) {
+        return contrasena.length() >= 8 && !contrasena.matches("[^a-zA-Z0-9]");
+    }
+
+    // Método para aplicar hash a la contraseña
+    private static String hashContrasena(String contrasena) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = md.digest(contrasena.getBytes());
+            StringBuilder hexHash = new StringBuilder();
+            for (byte b : hashBytes) {
+                hexHash.append(String.format("%02x", b));
+            }
+            return hexHash.toString();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // Método para verificar las credenciales del usuario
+    private static boolean verificarCredenciales(String usuario, String contrasena) {
+        // Verificar credenciales de usuario
+        return usuarios.containsKey(usuario) && usuarios.get(usuario).equals(contrasena);
+    }
+
+    // Método para obtener un número ingresado por el usuario
+    private static int obtenerNumero(Scanner scanner, String mensaje) {
+        while (true) {
+            try {
+                System.out.print(mensaje);
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Por favor, ingrese un número válido.");
+            }
+        }
+    }
+
+    // Método para registrar la visita de un usuario a un sitio turístico
+    private static void registrarVisita(String usuario, String sitio, Scanner scanner) {
+        List<String> historialUsuario = historialSitios.get(usuario);
+        List<LocalDateTime> historialFechasUsuario = historialFechas.get(usuario);
+
+        if (historialUsuario == null) {
+            historialUsuario = new ArrayList<>();
+        }
+        if (historialFechasUsuario == null) {
+            historialFechasUsuario = new ArrayList<>();
+        }
+
+        historialUsuario.add(sitio);
+        historialFechasUsuario.add(LocalDateTime.now());
+
+        historialSitios.put(usuario, historialUsuario);
+        historialFechas.put(usuario, historialFechasUsuario);
+
+        int personas = obtenerNumero(scanner, "Ingrese el número de personas que visitarán " + sitio + ": ");
+        double gastosAproximados = calcularGastosAproximados(sitio, personas);
+        mostrarDetallesSitio(sitio, obtenerTipoSitio(sitio), obtenerHorarioSitio(sitio), gastosAproximados);
+    }
+
+    // Método para obtener el tipo de sitio turístico
+    private static String obtenerTipoSitio(String sitio) {
+        switch (sitio) {
+            case SITIO_CENTRO:
+            case SITIO_CASTILLO:
+            case SITIO_INDIA:
+                return "Monumento Histórico";
+            case SITIO_PLAYA:
+                return "Playa";
+            default:
+                return "";
+        }
+    }
+
+    // Método para obtener el horario del sitio turístico
+    private static String obtenerHorarioSitio(String sitio) {
+        switch (sitio) {
+            case SITIO_CENTRO:
+                return "Todo el día";
+            case SITIO_CASTILLO:
+                return "Mañana";
+            case SITIO_PLAYA:
+                return "6 am - 7 pm";
+            case SITIO_INDIA:
+                return "Todo el día";
+            default:
+                return "";
+        }
+    }
+
+    // Método para calcular los gastos aproximados basados en el número de personas
+    private static double calcularGastosAproximados(String sitio, int personas) {
+        double costoBase = 0;
+        switch (sitio) {
+            case SITIO_CENTRO:
+                costoBase = 100000;
+                break;
+            case SITIO_CASTILLO:
+                costoBase = 50000;
+                break;
+            case SITIO_PLAYA:
+                costoBase = 150000;
+                break;
+            case SITIO_INDIA:
+                costoBase = 100000;
+                break;
+        }
+        return costoBase * personas;
+    }
+
+    // Método para mostrar el historial de sitios turísticos visitados por el usuario
+    private static void mostrarHistorialSitios(String usuario) {
+        List<String> historialUsuario = historialSitios.get(usuario);
+        List<LocalDateTime> historialFechasUsuario = historialFechas.get(usuario);
+
+        if (historialUsuario != null && !historialUsuario.isEmpty()) {
+            System.out.println("--- Historial de Sitios Turísticos Visitados ---");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            for (int i = 0; i < historialUsuario.size(); i++) {
+                String sitio = historialUsuario.get(i);
+                LocalDateTime fecha = historialFechasUsuario.get(i);
+                String fechaFormateada = fecha.format(formatter);
+                System.out.println("- " + sitio + " (Visitado el: " + fechaFormateada + ")");
+            }
+        } else {
+            System.out.println("No ha visitado ningún sitio turístico aún.");
+        }
+    }
+}
