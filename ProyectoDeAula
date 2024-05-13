@@ -453,5 +453,3 @@ private static void registrarNuevoUsuario(Scanner scanner) {
         // Se pueden agregar usuarios predefinidos aquí si se desea
     }
 }
-
-
