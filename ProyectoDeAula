@@ -1,4 +1,3 @@
-
 package com.mycompany.proyectodeaula;
 
 import java.util.*;
@@ -23,7 +22,7 @@ public class ProyectoDeAula {
     private static final Map<String, Map<String, String>> comentarios = new HashMap<>();
 
     public static void main(String[] args) {
-        // Inicialización de usuarios predefinidos (si se desea)
+        // Inicialización de usuarios predefinidos 
         inicializarUsuarios();
         Scanner scanner = new Scanner(System.in);
         boolean salir = false;
@@ -69,23 +68,34 @@ public class ProyectoDeAula {
     }
 
     // Método para registrar un nuevo usuario
-    private static void registrarNuevoUsuario(Scanner scanner) {
-        System.out.println("\n--- Registro de Nuevo Usuario ---");
-        String nuevoUsuario = obtenerNombreUsuario(scanner);
+private static void registrarNuevoUsuario(Scanner scanner) {
+    System.out.println("\n--- Registro de Nuevo Usuario ---");
+    String nuevoUsuario;
+    boolean usuarioValido = false;
+    
+    do {
+        nuevoUsuario = obtenerNombreUsuario(scanner);
         String nuevaContrasena = obtenerEntradaContrasena(scanner, "Ingrese una contraseña para registrarse: ");
 
-        // Validación del nombre de usuario y contraseña
-        if (nuevoUsuario != null) {
-            usuarios.put(nuevoUsuario, hashContrasena(nuevaContrasena));
-            historialSitios.put(nuevoUsuario, new ArrayList<>());
-            historialFechas.put(nuevoUsuario, new ArrayList<>());
-            calificaciones.put(nuevoUsuario, new HashMap<>());
-            comentarios.put(nuevoUsuario, new HashMap<>());
-            System.out.println("Registro exitoso. Ahora puede iniciar sesión.");
+        // Verificar si el nombre de usuario ya está en uso
+        if (usuarios.containsKey(nuevoUsuario)) {
+            System.out.println("El nombre de usuario ya está en uso. Por favor, elija otro nombre.");
         } else {
-            System.out.println("El nombre de usuario debe tener al menos 8 caracteres.");
+            // Validación del nombre de usuario y contraseña
+            if (nuevoUsuario != null) {
+                usuarios.put(nuevoUsuario, hashContrasena(nuevaContrasena));
+                historialSitios.put(nuevoUsuario, new ArrayList<>());
+                historialFechas.put(nuevoUsuario, new ArrayList<>());
+                calificaciones.put(nuevoUsuario, new HashMap<>());
+                comentarios.put(nuevoUsuario, new HashMap<>());
+                System.out.println("Registro exitoso. Ahora puede iniciar sesión.");
+                usuarioValido = true;
+            } else {
+                System.out.println("El nombre de usuario debe tener al menos 8 caracteres.");
+            }
         }
-    }
+    } while (!usuarioValido);
+}
 
     // Método para obtener y validar el nombre de usuario
     private static String obtenerNombreUsuario(Scanner scanner) {
@@ -189,17 +199,21 @@ public class ProyectoDeAula {
 
     // Método para obtener la calificación del sitio turístico
     private static int obtenerCalificacion(Scanner scanner) {
-        while (true) {
-            System.out.print("Ingrese la calificación (del 1 al 5): ");
-            String input = scanner.nextLine().trim();
-            try {
-                int calificacion = Integer.parseInt(input);
+    while (true) {
+        System.out.print("Ingrese la calificación (del 1 al 5): ");
+        String input = scanner.nextLine().trim();
+        try {
+            int calificacion = Integer.parseInt(input);
+            if (calificacion >= 1 && calificacion <= 5) {
                 return calificacion;
-            } catch (NumberFormatException e) {
-                System.out.println("Por favor, ingrese un número válido.");
+            } else {
+                System.out.println("Por favor, ingrese una calificación dentro del rango del 1 al 5.");
             }
+        } catch (NumberFormatException e) {
+            System.out.println("Por favor, ingrese un número válido.");
         }
     }
+}
 
     // Método para obtener el comentario del usuario
     private static String obtenerComentario(Scanner scanner) {
@@ -398,7 +412,6 @@ public class ProyectoDeAula {
             System.out.println("No se han registrado visitas a sitios turísticos.");
         }
     }
-
     // Método para mostrar los comentarios y calificaciones de los sitios turísticos
     private static void verComentariosYCalificaciones() {
         System.out.println("\n--- Comentarios y Calificaciones de Sitios Turísticos ---");
@@ -414,15 +427,31 @@ public class ProyectoDeAula {
             }
         }
     }
+    // Método para ver sitios turísticos visitados
+    private static void verSitiosTuristicosVisitados(Scanner scanner) {
+        System.out.println("\n--- Sitios Turísticos Visitados ---");
+        String usuario = obtenerEntradaUsuario(scanner, "Ingrese su nombre de usuario: ");
+        List<String> historialUsuario = historialSitios.get(usuario);
+        List<LocalDateTime> historialFechasUsuario = historialFechas.get(usuario);
+
+        if (historialUsuario != null && !historialUsuario.isEmpty()) {
+            System.out.println("Sitios turísticos visitados por " + usuario + ":");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            for (int i = 0; i < historialUsuario.size(); i++) {
+                String sitio = historialUsuario.get(i);
+                LocalDateTime fecha = historialFechasUsuario.get(i);
+                String fechaFormateada = formatter.format(fecha);
+                System.out.println("- Sitio: " + sitio + " | Fecha: " + fechaFormateada);
+            }
+        } else {
+            System.out.println("No se han registrado visitas a sitios turísticos para el usuario " + usuario + ".");
+        }
+    }
 
     // Método para inicializar usuarios predefinidos (si se desea)
     private static void inicializarUsuarios() {
         // Se pueden agregar usuarios predefinidos aquí si se desea
     }
-
-    // Método para ver sitios turísticos visitados (a implementar)
-    private static void verSitiosTuristicosVisitados(Scanner scanner) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }
+
 
